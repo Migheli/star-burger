@@ -1,5 +1,11 @@
+from itertools import product
+
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db.models import ForeignKey
+
+from phonenumber_field.modelfields import PhoneNumberField
+
 
 
 class Restaurant(models.Model):
@@ -121,3 +127,38 @@ class RestaurantMenuItem(models.Model):
 
     def __str__(self):
         return f"{self.restaurant.name} - {self.product.name}"
+
+
+class OrderData(models.Model):
+    first_name = models.CharField('Имя', max_length=50, db_index=True)
+    last_name = models.CharField('Фамилия', max_length=50, db_index=True)
+    phone_number = PhoneNumberField('Телефон', db_index=True)
+    address = models.CharField('Адрес', max_length=250, db_index=True)
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+
+
+class OrderProducts(models.Model):
+    order = models.ForeignKey(
+        OrderData,
+        verbose_name='элемент заказа',
+        related_name='elements',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL)
+
+    product = models.ForeignKey(
+        Product,
+        verbose_name='продукт',
+        related_name='elements',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL)
+
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        verbose_name = 'Элемент заказа'
+        verbose_name_plural = 'Элементы заказа'
