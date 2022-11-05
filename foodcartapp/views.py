@@ -2,7 +2,10 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 import json
 
+from rest_framework.decorators import api_view
+
 from .models import Product, OrderProducts, OrderData
+from rest_framework.response import Response
 
 
 def banners_list_api(request):
@@ -57,6 +60,7 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
     try:
         data = json.loads(request.body.decode())
