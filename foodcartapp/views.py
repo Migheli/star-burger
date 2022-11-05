@@ -66,20 +66,23 @@ def register_order(request):
         })
     # TODO это лишь заглушка
     print(data)
-    order_elements = []
-    for product in data['products']:
-        order_element = OrderProducts.objects.create(
-            order=None,
-            product=Product.objects.get(id=product['product']),
-            quantity=product['quantity']
-            )
-        order_elements.append(order_element)
     order = OrderData.objects.create(
         first_name=data['firstname'],
         last_name=data['lastname'],
         phone_number=data['phonenumber'],
         address=data['address'],
     )
+
+    order_elements = []
+    for product in data['products']:
+        order_element = OrderProducts(
+            order=order,
+            product=Product.objects.get(id=product['product']),
+            quantity=product['quantity']
+            )
+        order_elements.append(order_element)
+
+    order_elements = OrderProducts.objects.bulk_create(order_elements)
     order.elements.set(order_elements)
 
     return JsonResponse({})
