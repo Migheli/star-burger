@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
 import json
+import phonenumbers
 
 from rest_framework.decorators import api_view
 
@@ -63,15 +64,52 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     data = request.data
+
+    if 'firstname' not in data and 'lastname' not in data and 'phonenumber' not in data and 'address' not in data:
+        return Response('firstname, lastname, phonenumber, address: Обязательное поле.',
+                        status=status.HTTP_400_BAD_REQUEST)
+
     if 'products' not in data:
         return Response('products: Обязательное поле.',
                         status=status.HTTP_400_BAD_REQUEST)
+
+    if not any([data['firstname'], data['lastname'], data['phonenumber'], data['address']]):
+        return Response('firstname, lastname, phonenumber, address: Это поле не может быть пустым.',
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    if data['phonenumber'] is "":
+        return Response(
+            '// phonenumber: Это поле не может быть пустым.',
+            status=status.HTTP_400_BAD_REQUEST)
+
+    if not phonenumbers.is_valid_number(phonenumbers.parse(data['phonenumber'], "SG")):
+        return Response(
+            '// phonenumber: Введен некорректный номер телефона.',
+            status=status.HTTP_400_BAD_REQUEST)
+
+    for product in data['products']:
+        if product['product'] not in Product.objects.all().values_list('pk', flat=True):
+            return Response(
+                f'// products: Недопустимый первичный ключ "{product["product"]}',
+                status=status.HTTP_400_BAD_REQUEST)
+
+    if isinstance(data['firstname'], list):
+        return Response(
+            f'// firstname: Not a valid string.',
+            status=status.HTTP_400_BAD_REQUEST)
+
+
     if data['products'] is None:
         return Response('products: Это поле не может быть пустым.', status=status.HTTP_400_BAD_REQUEST)
     if type(data['products']) == str:
         return Response('products: Ожидался list со значениями, но был получен "str".', status=status.HTTP_400_BAD_REQUEST)
     if len(data['products']) == 0:
         return Response('products: Этот список не может быть пустым.', status=status.HTTP_400_BAD_REQUEST)
+
+    if data['firstname'] is None:
+        return Response('// firstname: Это поле не может быть пустым.',
+                        status=status.HTTP_400_BAD_REQUEST)
+
 
 
     print(data)
