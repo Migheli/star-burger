@@ -62,12 +62,13 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    try:
-        data = json.loads(request.body.decode())
-    except ValueError:
-        return JsonResponse({
-            'error': 'an error occured.',
-        })
+    data = request.data
+    #try:
+    #    data = json.loads(request.body.decode())
+    #except ValueError:
+    #    return JsonResponse({
+    #        'error': 'an error occured.',
+    #    })
     # TODO это лишь заглушка
     print(data)
     order = OrderData.objects.create(
@@ -87,6 +88,5 @@ def register_order(request):
         order_elements.append(order_element)
 
     order_elements = OrderProducts.objects.bulk_create(order_elements)
-    order.elements.set(order_elements)
 
     return JsonResponse({})
