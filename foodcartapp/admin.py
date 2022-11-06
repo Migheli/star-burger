@@ -112,10 +112,10 @@ class OrderProductsItemInline(admin.TabularInline):
 @admin.register(OrderData)
 class OrderDataAdmin(admin.ModelAdmin):
     list_display = [
-        'first_name',
-        'last_name',
+        'firstname',
+        'lastname',
         'address',
-        'phone_number',
+        'phonenumber',
     ]
 
     inlines = [

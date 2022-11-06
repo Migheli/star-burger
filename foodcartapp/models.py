@@ -130,9 +130,9 @@ class RestaurantMenuItem(models.Model):
 
 
 class OrderData(models.Model):
-    first_name = models.CharField('Имя', max_length=50, db_index=True)
-    last_name = models.CharField('Фамилия', max_length=50, db_index=True)
-    phone_number = PhoneNumberField('Телефон', db_index=True)
+    firstname = models.CharField('Имя', max_length=50, db_index=True)
+    lastname = models.CharField('Фамилия', max_length=50, db_index=True)
+    phonenumber = PhoneNumberField('Телефон', db_index=True)
     address = models.CharField('Адрес', max_length=250, db_index=True)
 
     class Meta:
@@ -144,7 +144,7 @@ class OrderProducts(models.Model):
     order = models.ForeignKey(
         OrderData,
         verbose_name='элемент заказа',
-        related_name='elements',
+        related_name='products',
         null=True,
         blank=True,
         on_delete=models.SET_NULL)
@@ -152,7 +152,7 @@ class OrderProducts(models.Model):
     product = models.ForeignKey(
         Product,
         verbose_name='продукт',
-        related_name='elements',
+        related_name='orders',
         null=True,
         blank=True,
         on_delete=models.SET_NULL)
