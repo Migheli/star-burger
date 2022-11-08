@@ -3,6 +3,8 @@ from django.templatetags.static import static
 import json
 import phonenumbers
 
+from rest_framework.renderers import JSONRenderer
+
 from rest_framework.decorators import api_view
 
 from .models import Product, OrderProducts, OrderData
@@ -71,43 +73,34 @@ class ProductSerializer(ModelSerializer):
         fields = ['product', 'quantity']
 
 
+class OrderSerializer(ModelSerializer):
 
-
-class ApplicationSerializer(ModelSerializer):
-    #products = ListField(
-    #    child=ProductSerializer(many=False)
-    #)
-    products = ProductSerializer(many=True, allow_empty=False)
+    products = ProductSerializer(many=True, allow_empty=False, write_only=True)
     class Meta:
         model = OrderData
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
 
 
-
 @api_view(['POST'])
 def register_order(request):
-    data = request.data
-
-    serializer = ApplicationSerializer(data=data)
+    serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)  # выкинет ValidationError
+    order_validated_data = serializer.validated_data
 
-    print(data)
     order = OrderData.objects.create(
-        firstname=data['firstname'],
-        lastname=data['lastname'],
-        phonenumber=data['phonenumber'],
-        address=data['address'],
+        firstname=order_validated_data['firstname'],
+        lastname=order_validated_data['lastname'],
+        phonenumber=order_validated_data['phonenumber'],
+        address=order_validated_data['address'],
     )
 
-    order_elements = []
-    for product in data['products']:
-        order_element = OrderProducts(
-            order=order,
-            product=Product.objects.get(id=product['product']),
-            quantity=product['quantity']
-            )
-        order_elements.append(order_element)
+    order_elements = [
+        OrderProducts(order=order,
+                      product=product['product'],
+                      quantity=product['quantity'])
+        for product in order_validated_data['products']
+    ]
 
-    order_elements = OrderProducts.objects.bulk_create(order_elements)
+    OrderProducts.objects.bulk_create(order_elements)
 
-    return JsonResponse({})
+    return Response(OrderSerializer(order).data)
