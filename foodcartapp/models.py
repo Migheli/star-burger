@@ -4,6 +4,8 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import ForeignKey
 
+from django.db.models import Count, Sum, F
+
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -129,6 +131,11 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+
+class OrderProductsQuerySet(models.QuerySet):
+    def get_element_sum(self):
+        return self.aggregate(element_sum=Sum(F('quantity') * F('product__price')))
+
 class OrderData(models.Model):
     firstname = models.CharField('Имя', max_length=50, db_index=True)
     lastname = models.CharField('Фамилия', max_length=50, db_index=True)
@@ -158,6 +165,9 @@ class OrderProducts(models.Model):
         on_delete=models.SET_NULL)
 
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
+
+
+    objects = OrderProductsQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Элемент заказа'
