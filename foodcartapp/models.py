@@ -7,6 +7,7 @@ from django.db.models import ForeignKey
 from django.db.models import Count, Sum, F
 
 from phonenumber_field.modelfields import PhoneNumberField
+from decimal import Decimal
 
 
 
@@ -131,10 +132,10 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-
 class OrderProductsQuerySet(models.QuerySet):
     def get_element_sum(self):
-        return self.aggregate(element_sum=Sum(F('quantity') * F('product__price')))
+        return self.aggregate(element_sum=Sum(F('quantity') * F('price')))
+
 
 class OrderData(models.Model):
     firstname = models.CharField('Имя', max_length=50, db_index=True)
@@ -164,8 +165,15 @@ class OrderProducts(models.Model):
         blank=True,
         on_delete=models.SET_NULL)
 
-    quantity = models.IntegerField(validators=[MinValueValidator(1)])
 
+    price = models.DecimalField(
+        'цена',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
 
     objects = OrderProductsQuerySet.as_manager()
 

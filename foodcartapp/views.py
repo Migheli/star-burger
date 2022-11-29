@@ -87,6 +87,7 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)  # выкинет ValidationError
     order_validated_data = serializer.validated_data
 
+    print(order_validated_data)
     order = OrderData.objects.create(
         firstname=order_validated_data['firstname'],
         lastname=order_validated_data['lastname'],
@@ -94,10 +95,14 @@ def register_order(request):
         address=order_validated_data['address'],
     )
 
+    print(order_validated_data['products'][0]['product'].price)
+
     order_elements = [
         OrderProducts(order=order,
                       product=product['product'],
-                      quantity=product['quantity'])
+                      quantity=product['quantity'],
+                      price=product['product'].price,
+                      )
         for product in order_validated_data['products']
     ]
 
