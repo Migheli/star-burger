@@ -14,6 +14,8 @@ from rest_framework import status
 from rest_framework.serializers import ModelSerializer
 from rest_framework.serializers import ListField
 
+from django.db import transaction
+
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -81,6 +83,7 @@ class OrderSerializer(ModelSerializer):
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
 
 
+@transaction.atomic
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
@@ -105,7 +108,6 @@ def register_order(request):
                       )
         for product in order_validated_data['products']
     ]
-
     OrderProducts.objects.bulk_create(order_elements)
 
     return Response(OrderSerializer(order).data)
