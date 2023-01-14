@@ -149,6 +149,7 @@ class OrderData(models.Model):
     address = models.CharField('Адрес', max_length=250, db_index=True)
     ORDER_STATUSES = [(RECEIPTED, 'Принят'), (COOKING, 'Готовится'), (DELIVERY, 'Доставка'), (COMPLETED, 'Выполнен')]
     status = models.CharField(
+        'Статус',
         max_length=25,
         choices=ORDER_STATUSES,
         default=RECEIPTED,
