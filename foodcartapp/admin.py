@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Product, OrderData
 from .models import ProductCategory
@@ -10,6 +11,8 @@ from .models import RestaurantMenuItem
 from .models import OrderProducts
 
 from django.shortcuts import redirect
+from star_burger.settings import ALLOWED_HOSTS
+from django.utils.encoding import iri_to_uri
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -127,12 +130,13 @@ class OrderDataAdmin(admin.ModelAdmin):
         OrderProductsItemInline
     ]
 
+
+
     def response_change(self, request, obj):
+
         print(request.GET.get)
         admin_change_model_page = super().response_post_save_change(request, obj)
-        if request.GET.get('returnUrl'):
-            return redirect(request.GET.get('returnUrl'))
-        else:
-            return admin_change_model_page
-
-
+        if url_has_allowed_host_and_scheme(request.GET.get('returnUrl'), None):
+            url = iri_to_uri(request.GET.get('returnUrl'))
+            return redirect(url)
+        return admin_change_model_page
