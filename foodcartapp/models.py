@@ -145,6 +145,7 @@ class OrderData(models.Model):
     DELIVERY = 'Доставка'
     COMPLETED = 'Выполнен'
 
+
     firstname = models.CharField('Имя', max_length=50, db_index=True)
     lastname = models.CharField('Фамилия', max_length=50, db_index=True)
     phonenumber = PhoneNumberField('Телефон', db_index=True)
@@ -157,6 +158,16 @@ class OrderData(models.Model):
         default=RECEIPTED,
         db_index=True
     )
+    CASH = 'Наличными'
+    ELECTRONIC = 'Электронно'
+    payment_type = models.CharField(
+        'Способ оплаты',
+        max_length=25,
+        choices=[(CASH, 'Наличными'),(ELECTRONIC, 'Электронно')],
+        default=CASH,
+        db_index=True
+    )
+
     comment = models.TextField('Комментарий', blank=True)
 
     registered_at = models.DateTimeField('Дата создания', default=timezone.now, db_index=True)
