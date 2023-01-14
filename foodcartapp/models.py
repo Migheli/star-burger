@@ -138,10 +138,25 @@ class OrderProductsQuerySet(models.QuerySet):
 
 
 class OrderData(models.Model):
+    RECEIPTED = 'Принят'
+    COOKING = 'Готовится'
+    DELIVERY = 'Доставка'
+    COMPLETED = 'Выполнен'
+
     firstname = models.CharField('Имя', max_length=50, db_index=True)
     lastname = models.CharField('Фамилия', max_length=50, db_index=True)
     phonenumber = PhoneNumberField('Телефон', db_index=True)
     address = models.CharField('Адрес', max_length=250, db_index=True)
+    ORDER_STATUSES = [(RECEIPTED, 'Принят'), (COOKING, 'Готовится'), (DELIVERY, 'Доставка'), (COMPLETED, 'Выполнен')]
+    status = models.CharField(
+        max_length=25,
+        choices=ORDER_STATUSES,
+        default=RECEIPTED,
+        db_index=True
+    )
+
+    def is_in_work(self):
+        return self.status != self.COMPLETED
 
     class Meta:
         verbose_name = 'Заказ'
