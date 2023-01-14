@@ -9,6 +9,9 @@ from .models import Restaurant
 from .models import RestaurantMenuItem
 from .models import OrderProducts
 
+from django.shortcuts import redirect
+
+
 class RestaurantMenuItemInline(admin.TabularInline):
     model = RestaurantMenuItem
     extra = 0
@@ -16,6 +19,7 @@ class RestaurantMenuItemInline(admin.TabularInline):
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
+
     search_fields = [
         'name',
         'address',
@@ -33,6 +37,7 @@ class RestaurantAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+
     list_display = [
         'get_image_list_preview',
         'name',
@@ -121,3 +126,13 @@ class OrderDataAdmin(admin.ModelAdmin):
     inlines = [
         OrderProductsItemInline
     ]
+
+    def response_change(self, request, obj):
+        print(request.GET.get)
+        admin_change_model_page = super().response_post_save_change(request, obj)
+        if request.GET.get('returnUrl'):
+            return redirect(request.GET.get('returnUrl'))
+        else:
+            return admin_change_model_page
+
+
