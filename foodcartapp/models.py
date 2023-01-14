@@ -3,6 +3,8 @@ from itertools import product
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import ForeignKey
+from django.utils import timezone
+
 
 from django.db.models import Count, Sum, F
 
@@ -156,6 +158,10 @@ class OrderData(models.Model):
         db_index=True
     )
     comment = models.TextField('Комментарий', blank=True)
+
+    registered_at = models.DateTimeField('Дата создания', default=timezone.now, db_index=True)
+    called_at = models.DateTimeField('Дата звонка', blank=True, null=True, db_index=True)
+    delivered_at = models.DateTimeField('Дата доставки', blank=True, null=True, db_index=True)
 
     class Meta:
         verbose_name = 'Заказ'
