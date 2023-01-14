@@ -155,13 +155,14 @@ class OrderData(models.Model):
         default=RECEIPTED,
         db_index=True
     )
-
-    def is_in_work(self):
-        return self.status != self.COMPLETED
+    comment = models.TextField('Комментарий', blank=True)
 
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+
+    def is_in_work(self):
+        return self.status != self.COMPLETED
 
 
 class OrderProducts(models.Model):
