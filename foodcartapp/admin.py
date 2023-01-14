@@ -134,9 +134,6 @@ class OrderDataAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
 
-        print(request.GET.get)
-        admin_change_model_page = super().response_post_save_change(request, obj)
         if url_has_allowed_host_and_scheme(request.GET.get('returnUrl'), None):
-            url = iri_to_uri(request.GET.get('returnUrl'))
-            return redirect(url)
-        return admin_change_model_page
+            return redirect(iri_to_uri(request.GET.get('returnUrl')))
+        return super().response_post_save_change(request, obj)
