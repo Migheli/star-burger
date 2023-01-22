@@ -11,8 +11,10 @@ from itertools import chain
 from foodcartapp.models import Product, Restaurant, OrderData, RestaurantMenuItem
 import requests
 
-
 from star_burger.settings import YANDEX_GEOCODER_KEY
+from geopy import distance
+
+
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -118,9 +120,17 @@ def view_orders(request):
     orders_with_allowed_restaurants = []
 
     for order_item in order_items:
+        distance_to_customer = None
         if order_item.restaurant:
+            print(f'Адрес заказчика - {order_item.address}')
             print(f'Адрес Ресторана - {order_item.restaurant.address}')
-            print(f'Результат работы функции определения координат - {fetch_coordinates(order_item.restaurant.address)}')
+            print(f'Результат работы функции определения координат Ресторана- {fetch_coordinates(order_item.address)}')
+
+            print(f'Результат работы функции определения координат заказчика - {fetch_coordinates(order_item.restaurant.address)}')
+
+            distance_to_customer = distance.distance(fetch_coordinates(order_item.address), fetch_coordinates(order_item.restaurant.address)).km
+            print(distance_to_customer)
+
         print(f'статус = {order_item.status} ресторан = {order_item.restaurant}')
         if order_item.status == 'Принят' and order_item.restaurant:
             print(f'статус = {order_item.status} ресторан = {order_item.restaurant}')
@@ -132,6 +142,7 @@ def view_orders(request):
             product = order_product.product
             menu_items = list(RestaurantMenuItem.objects.filter(product_id=product.id, availability=True))
             restaurant_with_available_product = [menu_item.restaurant for menu_item in menu_items]
+
             restaurants_with_product_availability.append(restaurant_with_available_product)
 
         restaurants_with_available_products = set(chain.from_iterable(restaurants_with_product_availability))
@@ -139,8 +150,12 @@ def view_orders(request):
         for restaurant_with_available_products in restaurants_with_available_products:
             if all(restaurant for restaurant in restaurants_with_product_availability):
                 allowed_restaurants.add(restaurant_with_available_products)
+        allowed_restaurants_with_distance = []
 
-        orders_with_allowed_restaurants.append((order_item, allowed_restaurants))
+        for allowed_restaurant in allowed_restaurants:
+            distance_to_customer = round(distance.distance(fetch_coordinates(order_item.address), fetch_coordinates(allowed_restaurant.address)).km, 2)
+            allowed_restaurants_with_distance.append((allowed_restaurant, distance_to_customer))
+        orders_with_allowed_restaurants.append((order_item, allowed_restaurants_with_distance))
 
     print(orders_with_allowed_restaurants)
     return render(request, template_name='order_items.html', context={

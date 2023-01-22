@@ -26,7 +26,8 @@
       <th>Статус</th>
     </tr>
 
-    {% for item, restaurants in orders_with_allowed_restaurants %}
+    {% for item, restaurants_with_disctance in orders_with_allowed_restaurants %}
+
       {% if item.is_in_work %}
         <tr>
           <td> {{ item.id }} </td>
@@ -41,8 +42,8 @@
             <details>
 
               <summary> Рестораны </summary>
-                {% for restaurant in restaurants %}
-                 <p>{{ restaurant}}</p>
+                {% for restaurant, disctance in restaurants_with_disctance %}
+                 <li>{{restaurant}} - {{disctance}} км</li>
                 {% endfor %}
             </details>>
           </td>
