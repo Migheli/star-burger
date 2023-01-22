@@ -155,7 +155,9 @@ def view_orders(request):
         for allowed_restaurant in allowed_restaurants:
             distance_to_customer = round(distance.distance(fetch_coordinates(order_item.address), fetch_coordinates(allowed_restaurant.address)).km, 2)
             allowed_restaurants_with_distance.append((allowed_restaurant, distance_to_customer))
-        orders_with_allowed_restaurants.append((order_item, allowed_restaurants_with_distance))
+
+        sorted_allowed_restaurants_with_distance = sorted(allowed_restaurants_with_distance, key=lambda distance: distance[1])
+        orders_with_allowed_restaurants.append((order_item, sorted_allowed_restaurants_with_distance))
 
     print(orders_with_allowed_restaurants)
     return render(request, template_name='order_items.html', context={
