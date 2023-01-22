@@ -141,7 +141,7 @@ class OrderProductsQuerySet(models.QuerySet):
 
 class OrderData(models.Model):
     RECEIPTED = 'Принят'
-    COOKING = 'Готовится'
+    COOKING = 'Принят'
     DELIVERY = 'Доставка'
     COMPLETED = 'Выполнен'
 
@@ -150,14 +150,8 @@ class OrderData(models.Model):
     lastname = models.CharField('Фамилия', max_length=50, db_index=True)
     phonenumber = PhoneNumberField('Телефон', db_index=True)
     address = models.CharField('Адрес', max_length=250, db_index=True)
-    ORDER_STATUSES = [(RECEIPTED, 'Принят'), (COOKING, 'Готовится'), (DELIVERY, 'Доставка'), (COMPLETED, 'Выполнен')]
-    status = models.CharField(
-        'Статус',
-        max_length=25,
-        choices=ORDER_STATUSES,
-        default=RECEIPTED,
-        db_index=True
-    )
+    ORDER_STATUSES = [(RECEIPTED, 'Принят'), (COOKING, 'Принят'), (DELIVERY, 'Доставка'), (COMPLETED, 'Выполнен')]
+
     CASH = 'Наличными'
     ELECTRONIC = 'Электронно'
     payment_type = models.CharField(
@@ -174,12 +168,33 @@ class OrderData(models.Model):
     called_at = models.DateTimeField('Дата звонка', blank=True, null=True, db_index=True)
     delivered_at = models.DateTimeField('Дата доставки', blank=True, null=True, db_index=True)
 
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='Какой из ресторанов приготовит',
+        related_name='orders',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL)
+
+    status = models.CharField(
+        'Статус',
+        max_length=25,
+        choices=ORDER_STATUSES,
+        default=RECEIPTED,
+        db_index=True
+    )
+
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
+        ordering = ['called_at']
 
     def is_in_work(self):
-        return self.status != self.COMPLETED
+        return self.status != 'Выполнен'
+
+
+
+
 
 
 class OrderProducts(models.Model):

@@ -125,3 +125,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "bundles"),
 ]
 
+YANDEX_GEOCODER_KEY = env('YANDEX_GEOCODER_KEY')
+
+

@@ -6,10 +6,13 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from itertools import chain
+
+from foodcartapp.models import Product, Restaurant, OrderData, RestaurantMenuItem
+import requests
 
 
-from foodcartapp.models import Product, Restaurant, OrderData
-
+from star_burger.settings import YANDEX_GEOCODER_KEY
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -90,8 +93,59 @@ def view_restaurants(request):
     })
 
 
+def fetch_coordinates(address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": YANDEX_GEOCODER_KEY,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    order_items = list(OrderData.objects.prefetch_related('products'))
+    menu_items = list(RestaurantMenuItem.objects.all())
+    orders_with_allowed_restaurants = []
+
+    for order_item in order_items:
+        if order_item.restaurant:
+            print(f'Адрес Ресторана - {order_item.restaurant.address}')
+            print(f'Результат работы функции определения координат - {fetch_coordinates(order_item.restaurant.address)}')
+        print(f'статус = {order_item.status} ресторан = {order_item.restaurant}')
+        if order_item.status == 'Принят' and order_item.restaurant:
+            print(f'статус = {order_item.status} ресторан = {order_item.restaurant}')
+            OrderData.objects.filter(pk=order_item.id).update(status='Готовится')
+            order_item.status = 'Готовится'
+
+        restaurants_with_product_availability= []
+        for order_product in order_item.products.all():
+            product = order_product.product
+            menu_items = list(RestaurantMenuItem.objects.filter(product_id=product.id, availability=True))
+            restaurant_with_available_product = [menu_item.restaurant for menu_item in menu_items]
+            restaurants_with_product_availability.append(restaurant_with_available_product)
+
+        restaurants_with_available_products = set(chain.from_iterable(restaurants_with_product_availability))
+        allowed_restaurants = set()
+        for restaurant_with_available_products in restaurants_with_available_products:
+            if all(restaurant for restaurant in restaurants_with_product_availability):
+                allowed_restaurants.add(restaurant_with_available_products)
+
+        orders_with_allowed_restaurants.append((order_item, allowed_restaurants))
+
+    print(orders_with_allowed_restaurants)
     return render(request, template_name='order_items.html', context={
-        'order_items': OrderData.objects.all()
+        'orders_with_allowed_restaurants': orders_with_allowed_restaurants,
+        #'menu_items': RestaurantMenuItem.objects.all(),
+        #'allowed_restaurants': allowed_restaurants,
+        #'rest_dict': rest_dict
     })
