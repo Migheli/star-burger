@@ -116,28 +116,15 @@ def fetch_coordinates(address):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     order_items = list(OrderData.objects.prefetch_related('products'))
-    menu_items = list(RestaurantMenuItem.objects.all())
     orders_with_allowed_restaurants = []
 
     for order_item in order_items:
-        distance_to_customer = None
-        if order_item.restaurant:
-            print(f'Адрес заказчика - {order_item.address}')
-            print(f'Адрес Ресторана - {order_item.restaurant.address}')
-            print(f'Результат работы функции определения координат Ресторана- {fetch_coordinates(order_item.address)}')
 
-            print(f'Результат работы функции определения координат заказчика - {fetch_coordinates(order_item.restaurant.address)}')
-
-            distance_to_customer = distance.distance(fetch_coordinates(order_item.address), fetch_coordinates(order_item.restaurant.address)).km
-            print(distance_to_customer)
-
-        print(f'статус = {order_item.status} ресторан = {order_item.restaurant}')
         if order_item.status == 'Принят' and order_item.restaurant:
-            print(f'статус = {order_item.status} ресторан = {order_item.restaurant}')
             OrderData.objects.filter(pk=order_item.id).update(status='Готовится')
             order_item.status = 'Готовится'
 
-        restaurants_with_product_availability= []
+        restaurants_with_product_availability= [] # находим все рестораны с доступным нужным нам продуктом
         for order_product in order_item.products.all():
             product = order_product.product
             menu_items = list(RestaurantMenuItem.objects.filter(product_id=product.id, availability=True))
@@ -145,11 +132,15 @@ def view_orders(request):
 
             restaurants_with_product_availability.append(restaurant_with_available_product)
 
-        restaurants_with_available_products = set(chain.from_iterable(restaurants_with_product_availability))
+
+        restaurants_with_available_products = set(chain.from_iterable(restaurants_with_product_availability)) # делаем из рестранов - сет без дублирующих
+
         allowed_restaurants = set()
-        for restaurant_with_available_products in restaurants_with_available_products:
-            if all(restaurant for restaurant in restaurants_with_product_availability):
-                allowed_restaurants.add(restaurant_with_available_products)
+
+        for restaurant in restaurants_with_available_products:
+            if list(chain.from_iterable(restaurants_with_product_availability)).count(restaurant) == order_item.products.count():
+                allowed_restaurants.add(restaurant)
+
         allowed_restaurants_with_distance = []
 
         for allowed_restaurant in allowed_restaurants:
@@ -159,10 +150,6 @@ def view_orders(request):
         sorted_allowed_restaurants_with_distance = sorted(allowed_restaurants_with_distance, key=lambda distance: distance[1])
         orders_with_allowed_restaurants.append((order_item, sorted_allowed_restaurants_with_distance))
 
-    print(orders_with_allowed_restaurants)
     return render(request, template_name='order_items.html', context={
         'orders_with_allowed_restaurants': orders_with_allowed_restaurants,
-        #'menu_items': RestaurantMenuItem.objects.all(),
-        #'allowed_restaurants': allowed_restaurants,
-        #'rest_dict': rest_dict
     })
