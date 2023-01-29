@@ -13,8 +13,8 @@ from decimal import Decimal
 class Location(models.Model):
 
     address = models.CharField('Адрес локации', max_length=200, unique=True)
-    lat = models.FloatField('Широта')
-    lon = models.FloatField('Долгота')
+    lat = models.FloatField('Широта', null=True)
+    lon = models.FloatField('Долгота', null=True)
     updated_at = models.DateTimeField('Дата актуализации', default=timezone.now, db_index=True)
 
     class Meta:
@@ -26,3 +26,6 @@ class Location(models.Model):
 
     def is_expired(self):
         return (timezone.now() - self.updated_at).days > 180
+
+    def is_blank(self):
+        return self.lat is None

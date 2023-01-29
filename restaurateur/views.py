@@ -115,6 +115,23 @@ def fetch_coordinates(address):
     return lon, lat
 
 
+
+def get_address_coordinates(locations, address):
+
+    location, created = locations.get_or_create(
+        address=address,
+        defaults={'lon': None, 'lat': None}
+    )
+
+    if any([created, location.is_expired(), location.is_blank()]):
+        try:
+            location.lon, location.lat = fetch_coordinates(address)
+        except RequestException:
+            location.lon, location.lat = None, None
+
+    return location.lon, location.lat
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     order_items = list(OrderData.objects.prefetch_related('products'))
@@ -149,71 +166,8 @@ def view_orders(request):
         for allowed_restaurant in allowed_restaurants:
             allowed_restaurant_coordinates = []
             customer_coordinates = []
-            try:
-                order_item_address = locations.get(address=order_item.address)
-                if order_item_address.is_expired():
-                    try:
-                        lon, lat = fetch_coordinates(order_item_address.address)
-                        order_item_address.lon=lon
-                        order_item_address.lat=lat
-                    except RequestException:
-                        order_item_address.lon = None
-                        order_item_address.lat = None
-                customer_coordinates = order_item_address.lon, order_item_address.lat
-
-            except Location.DoesNotExist:
-                try:
-                    lon, lat = fetch_coordinates(order_item.address)
-                    order_item_address = Location.objects.create(
-                        address=order_item.address,
-                        lon=lon,
-                        lat=lat
-                                                                 )
-
-                    order_item_address.lon=lon
-                    order_item_address.lat=lat
-                    customer_coordinates = order_item_address.lon, order_item_address.lat
-
-                except RequestException:
-                    customer_coordinates = None, None
-
-
-            try:
-
-                allowed_restaurant_address = locations.get(address=allowed_restaurant.address)
-                (print(f'работает ветка с получением объекта из БД ресторанов'))
-
-                if allowed_restaurant_address.is_expired():
-                    try:
-                        lon, lat = fetch_coordinates(allowed_restaurant.address)
-                        allowed_restaurant_address.lon = lon
-                        allowed_restaurant_address.lat = lat
-
-                    except RequestException:
-                        allowed_restaurant.lon = None
-                        allowed_restaurant.lat = None
-
-                allowed_restaurant_coordinates = allowed_restaurant_address.lon, allowed_restaurant_address.lat
-
-            except Location.DoesNotExist:
-                lon = None
-                lat = None
-                try:
-                    lon, lat = fetch_coordinates(allowed_restaurant.address)
-                    print('Успешно нашли координаты ресторана.')
-                    Location.objects.create(
-                        address=allowed_restaurant.address,
-                        lon=lon,
-                        lat=lat)
-
-                except RequestException:
-                    pass
-                allowed_restaurant_coordinates = lon, lat
-
-
-
-            print(f'КООРДИНАТЫ ПОЛЬЗОВАТЕЛЯ {customer_coordinates}')
-            print(f'КООРДИНАТЫ РЕСТОРАНА {allowed_restaurant_coordinates}')
+            customer_coordinates = get_address_coordinates(locations, order_item.address)
+            allowed_restaurant_coordinates = get_address_coordinates(locations, allowed_restaurant.address)
 
             if None in customer_coordinates or None in allowed_restaurant_coordinates:
                 distance_to_customer = -1
