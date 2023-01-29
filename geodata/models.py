@@ -25,4 +25,4 @@ class Location(models.Model):
         return self.address
 
     def is_expired(self):
-        return (self.updated_at - timezone.now()).days > 180
+        return (timezone.now() - self.updated_at).days > 180

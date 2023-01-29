@@ -9,12 +9,14 @@ from django.contrib.auth import views as auth_views
 from itertools import chain
 
 from foodcartapp.models import Product, Restaurant, OrderData, RestaurantMenuItem
+from geodata.models import Location
 import requests
 
 from star_burger.settings import YANDEX_GEOCODER_KEY
-from geopy import distance
+from geopy import distance as dist
+from django.utils import timezone
 
-
+from requests.exceptions import RequestException
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -117,6 +119,7 @@ def fetch_coordinates(address):
 def view_orders(request):
     order_items = list(OrderData.objects.prefetch_related('products'))
     orders_with_allowed_restaurants = []
+    locations = Location.objects.all()
 
     for order_item in order_items:
 
@@ -144,11 +147,92 @@ def view_orders(request):
         allowed_restaurants_with_distance = []
 
         for allowed_restaurant in allowed_restaurants:
-            distance_to_customer = round(distance.distance(fetch_coordinates(order_item.address), fetch_coordinates(allowed_restaurant.address)).km, 2)
+            allowed_restaurant_coordinates = []
+            customer_coordinates = []
+            try:
+                order_item_address = locations.get(address=order_item.address)
+                if order_item_address.is_expired():
+                    try:
+                        lon, lat = fetch_coordinates(order_item_address.address)
+                        order_item_address.lon=lon
+                        order_item_address.lat=lat
+                    except RequestException:
+                        order_item_address.lon = None
+                        order_item_address.lat = None
+                customer_coordinates = order_item_address.lon, order_item_address.lat
+
+            except Location.DoesNotExist:
+                try:
+                    lon, lat = fetch_coordinates(order_item.address)
+                    order_item_address = Location.objects.create(
+                        address=order_item.address,
+                        lon=lon,
+                        lat=lat
+                                                                 )
+
+                    order_item_address.lon=lon
+                    order_item_address.lat=lat
+                    customer_coordinates = order_item_address.lon, order_item_address.lat
+
+                except RequestException:
+                    customer_coordinates = None, None
+
+
+            try:
+
+                allowed_restaurant_address = locations.get(address=allowed_restaurant.address)
+                (print(f'работает ветка с получением объекта из БД ресторанов'))
+
+                if allowed_restaurant_address.is_expired():
+                    try:
+                        lon, lat = fetch_coordinates(allowed_restaurant.address)
+                        allowed_restaurant_address.lon = lon
+                        allowed_restaurant_address.lat = lat
+
+                    except RequestException:
+                        allowed_restaurant.lon = None
+                        allowed_restaurant.lat = None
+
+                allowed_restaurant_coordinates = allowed_restaurant_address.lon, allowed_restaurant_address.lat
+
+            except Location.DoesNotExist:
+                lon = None
+                lat = None
+                try:
+                    lon, lat = fetch_coordinates(allowed_restaurant.address)
+                    print('Успешно нашли координаты ресторана.')
+                    Location.objects.create(
+                        address=allowed_restaurant.address,
+                        lon=lon,
+                        lat=lat)
+
+                except RequestException:
+                    pass
+                allowed_restaurant_coordinates = lon, lat
+
+
+
+            print(f'КООРДИНАТЫ ПОЛЬЗОВАТЕЛЯ {customer_coordinates}')
+            print(f'КООРДИНАТЫ РЕСТОРАНА {allowed_restaurant_coordinates}')
+
+            if None in customer_coordinates or None in allowed_restaurant_coordinates:
+                distance_to_customer = -1
+            else:
+                distance_to_customer = round(dist.distance(customer_coordinates, allowed_restaurant_coordinates).km, 2)
+
             allowed_restaurants_with_distance.append((allowed_restaurant, distance_to_customer))
 
+        print(f'РЕСТОРАНЫ С ДИСТАНЦИЯМИ ДО НИХ --- {allowed_restaurants_with_distance}')
+
         sorted_allowed_restaurants_with_distance = sorted(allowed_restaurants_with_distance, key=lambda distance: distance[1])
-        orders_with_allowed_restaurants.append((order_item, sorted_allowed_restaurants_with_distance))
+
+        new_sorted_allowed_restaurants_with_distance = []
+        for restaurant, distance in sorted_allowed_restaurants_with_distance:
+            if distance < 0:
+               distance = 'Ошибка определения координат - расстояние неизвестно'
+            new_sorted_allowed_restaurants_with_distance.append((restaurant, distance))
+
+        orders_with_allowed_restaurants.append((order_item, new_sorted_allowed_restaurants_with_distance))
 
     return render(request, template_name='order_items.html', context={
         'orders_with_allowed_restaurants': orders_with_allowed_restaurants,
