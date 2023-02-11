@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from itertools import chain
 
 from foodcartapp.models import Product, Restaurant, OrderData, RestaurantMenuItem
 from geodata.models import Location
@@ -14,7 +13,6 @@ import requests
 
 from star_burger.settings import YANDEX_GEOCODER_KEY
 from geopy import distance as dist
-from django.utils import timezone
 
 from requests.exceptions import RequestException
 
@@ -136,7 +134,7 @@ def get_address_coordinates(locations, address):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    order_items = OrderData.objects.prefetch_related('products')
+    orders = OrderData.objects.prefetch_related('products')
     locations = Location.objects.all()
     menu_items = RestaurantMenuItem.objects.all()
     restaurants = Restaurant.objects.all()
@@ -145,25 +143,25 @@ def view_orders(request):
     for menu_item in menu_items}
 
     orders_with_allowed_restaurants = []
-    for order_item in order_items:
+    for order in orders:
 
-        if order_item.status == 'Принят' and order_item.restaurant:
-            OrderData.objects.filter(pk=order_item.id).update(status='Готовится')
-            order_item.status = 'Готовится'
+        if order.status == 'Принят' and order.restaurant:
+            OrderData.objects.filter(pk=order.id).update(status='Готовится')
+            order.status = 'Готовится'
 
         restaurants_with_product_availability = [
-            restaurant for order_product in order_item.products.all()
+            restaurant for order_product in order.products.all()
             for restaurant in restaurants if menu_items_availability.get((order_product.product_id, restaurant.id))
         ]
 
         allowed_restaurants = set([restaurant for restaurant in restaurants_with_product_availability
-                                   if restaurants_with_product_availability.count(restaurant) == order_item.products.count()]) # если количество вхождений ресторана в список равно количеству элементов заказа, добавляем ресторан в неповторяющийся сет искомых ресторанов
+                                   if restaurants_with_product_availability.count(restaurant) == order.products.count()]) # если количество вхождений ресторана в список равно количеству элементов заказа, добавляем ресторан в неповторяющийся сет искомых ресторанов
 
         preloaded_locations = {location.address : (location.lon, location.lat, location.is_expired()) for location in locations}
         restaurants_with_distances = []
 
         for allowed_restaurant in allowed_restaurants:
-            customer_coordinates = get_address_coordinates(preloaded_locations, order_item.address)
+            customer_coordinates = get_address_coordinates(preloaded_locations, order.address)
             allowed_restaurant_coordinates = get_address_coordinates(preloaded_locations, allowed_restaurant.address)
 
             if customer_coordinates and allowed_restaurant_coordinates:
@@ -174,7 +172,7 @@ def view_orders(request):
 
         sorted_restaurants_with_distances = sorted(restaurants_with_distances, key=lambda distance: distance[1])
 
-        orders_with_allowed_restaurants.append((order_item, sorted_restaurants_with_distances))
+        orders_with_allowed_restaurants.append((order, sorted_restaurants_with_distances))
 
     return render(request, template_name='order_items.html', context={
         'orders_with_allowed_restaurants': orders_with_allowed_restaurants,
