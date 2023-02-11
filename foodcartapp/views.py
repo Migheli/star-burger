@@ -1,19 +1,9 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
-import json
-import phonenumbers
-
-from rest_framework.renderers import JSONRenderer
-
 from rest_framework.decorators import api_view
-
 from .models import Product, OrderProducts, OrderData
 from rest_framework.response import Response
-from rest_framework import status
-
 from rest_framework.serializers import ModelSerializer
-from rest_framework.serializers import ListField
-
 from django.db import transaction
 
 
@@ -78,6 +68,7 @@ class ProductSerializer(ModelSerializer):
 class OrderSerializer(ModelSerializer):
 
     products = ProductSerializer(many=True, allow_empty=False, write_only=True)
+
     class Meta:
         model = OrderData
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']

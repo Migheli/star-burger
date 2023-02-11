@@ -143,7 +143,7 @@ class OrderData(models.Model):
     payment_type = models.CharField(
         'Способ оплаты',
         max_length=25,
-        choices=[('Наличными', 'Наличными'),('Электронно', 'Электронно')],
+        choices=[('Наличными', 'Наличными'), ('Электронно', 'Электронно')],
         default='Наличными',
         db_index=True
     )
@@ -195,7 +195,6 @@ class OrderProducts(models.Model):
         null=True,
         blank=True,
         on_delete=models.SET_NULL)
-
 
     price = models.DecimalField(
         'цена',

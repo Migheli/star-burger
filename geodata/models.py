@@ -1,13 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator
-from django.db.models import ForeignKey
 from django.utils import timezone
-
-
-from django.db.models import Count, Sum, F
-
-from phonenumber_field.modelfields import PhoneNumberField
-from decimal import Decimal
 
 
 class Location(models.Model):

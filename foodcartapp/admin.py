@@ -113,6 +113,7 @@ class ProductAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     pass
 
+
 class OrderProductsItemInline(admin.TabularInline):
     model = OrderProducts
 
@@ -129,8 +130,6 @@ class OrderDataAdmin(admin.ModelAdmin):
     inlines = [
         OrderProductsItemInline
     ]
-
-
 
     def response_change(self, request, obj):
 
