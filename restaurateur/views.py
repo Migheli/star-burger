@@ -111,7 +111,7 @@ def fetch_coordinates(address):
         return lon, lat
 
 
-def get_address_coordinates(locations, address):
+def get_coordinates(locations, address):
     lon, lat = None, None
     is_expired = True
 
@@ -161,11 +161,11 @@ def view_orders(request):
         restaurants_with_distances = []
 
         for allowed_restaurant in allowed_restaurants:
-            customer_coordinates = get_address_coordinates(preloaded_locations, order.address)
-            allowed_restaurant_coordinates = get_address_coordinates(preloaded_locations, allowed_restaurant.address)
+            customer_coordinates = get_coordinates(preloaded_locations, order.address)
+            restaurant_coordinates = get_coordinates(preloaded_locations, allowed_restaurant.address)
 
-            if customer_coordinates and allowed_restaurant_coordinates:
-                distance_to_customer = round(dist.distance(customer_coordinates, allowed_restaurant_coordinates).km, 2)
+            if customer_coordinates and restaurant_coordinates:
+                distance_to_customer = round(dist.distance(customer_coordinates, restaurant_coordinates).km, 2)
             else:
                 distance_to_customer = -1   # отрицательное значение переменной является индикатором того, что дистанцию вычислить не удалось и произошла ошибка
             restaurants_with_distances.append((allowed_restaurant, distance_to_customer))
