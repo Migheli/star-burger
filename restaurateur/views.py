@@ -11,7 +11,7 @@ from foodcartapp.models import Product, Restaurant, OrderData, RestaurantMenuIte
 from geodata.models import Location
 import requests
 
-from star_burger.settings import YANDEX_GEOCODER_KEY
+from django.conf import settings
 from geopy import distance as dist
 
 from requests.exceptions import RequestException
@@ -99,7 +99,7 @@ def fetch_coordinates(address):
     base_url = "https://geocode-maps.yandex.ru/1.x"
     response = requests.get(base_url, params={
         "geocode": address,
-        "apikey": YANDEX_GEOCODER_KEY,
+        "apikey": settings.YANDEX_GEOCODER_KEY,
         "format": "json",
     })
     response.raise_for_status()
