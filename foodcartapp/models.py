@@ -1,16 +1,10 @@
-from itertools import product
-
 from django.db import models
 from django.core.validators import MinValueValidator
-from django.db.models import ForeignKey
 from django.utils import timezone
 
-
-from django.db.models import Count, Sum, F
+from django.db.models import Sum, F
 
 from phonenumber_field.modelfields import PhoneNumberField
-from decimal import Decimal
-
 
 
 class Restaurant(models.Model):
@@ -78,7 +72,7 @@ class Product(models.Model):
         'цена',
         max_digits=8,
         decimal_places=2,
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(1)]
     )
     image = models.ImageField(
         'картинка'
@@ -140,25 +134,17 @@ class OrderProductsQuerySet(models.QuerySet):
 
 
 class OrderData(models.Model):
-    RECEIPTED = 'Принят'
-    COOKING = 'Принят'
-    DELIVERY = 'Доставка'
-    COMPLETED = 'Выполнен'
-
-
     firstname = models.CharField('Имя', max_length=50, db_index=True)
     lastname = models.CharField('Фамилия', max_length=50, db_index=True)
     phonenumber = PhoneNumberField('Телефон', db_index=True)
     address = models.CharField('Адрес', max_length=250, db_index=True)
-    ORDER_STATUSES = [(RECEIPTED, 'Принят'), (COOKING, 'Принят'), (DELIVERY, 'Доставка'), (COMPLETED, 'Выполнен')]
-
-    CASH = 'Наличными'
-    ELECTRONIC = 'Электронно'
+    ORDER_STATUSES = [('Принят', 'Принят'), ('Готовится', 'Готовится'),
+                      ('Доставка', 'Доставка'), ('Выполнен', 'Выполнен')]
     payment_type = models.CharField(
         'Способ оплаты',
         max_length=25,
-        choices=[(CASH, 'Наличными'),(ELECTRONIC, 'Электронно')],
-        default=CASH,
+        choices=[('Наличными', 'Наличными'),('Электронно', 'Электронно')],
+        default='Наличными',
         db_index=True
     )
 
@@ -180,7 +166,7 @@ class OrderData(models.Model):
         'Статус',
         max_length=25,
         choices=ORDER_STATUSES,
-        default=RECEIPTED,
+        default='Принят',
         db_index=True
     )
 
@@ -191,10 +177,6 @@ class OrderData(models.Model):
 
     def is_in_work(self):
         return self.status != 'Выполнен'
-
-
-
-
 
 
 class OrderProducts(models.Model):
@@ -219,7 +201,7 @@ class OrderProducts(models.Model):
         'цена',
         max_digits=8,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(1)],
     )
 
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
