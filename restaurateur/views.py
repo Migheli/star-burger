@@ -107,86 +107,82 @@ def fetch_coordinates(address):
     response.raise_for_status()
     found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
-    if not found_places:
-        return None
-
-    most_relevant = found_places[0]
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
-
+    if found_places:
+        most_relevant = found_places[0]
+        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+        return lon, lat
 
 
 def get_address_coordinates(locations, address):
+    location_lon, location_lat = None, None
+    is_expired = True
 
-    location, created = locations.get_or_create(
-        address=address,
-        defaults={'lon': None, 'lat': None}
-    )
+    if locations.get(address):
+        location_lon, location_lat, is_expired = locations.get(address)
 
-    if any([created, location.is_expired(), location.is_blank()]):
+    if all([not is_expired, location_lon, location_lat]):
+        return location_lon, location_lat
+
+    else:
         try:
-            location.lon, location.lat = fetch_coordinates(address)
+            coordinates = fetch_coordinates(address)
+            if coordinates:
+                location_lon, location_lat = coordinates
+                Location.objects.update_or_create(address=address, lon=location_lon, lat=location_lat) #UPDATE Очень тормозит поскольку ищет все.
+                return location_lon, location_lat
         except RequestException:
-            location.lon, location.lat = None, None
-
-    return location.lon, location.lat
-
+            return None
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    order_items = list(OrderData.objects.prefetch_related('products'))
-    orders_with_allowed_restaurants = []
+    order_items = OrderData.objects.prefetch_related('products')
     locations = Location.objects.all()
+    menu_items = RestaurantMenuItem.objects.all()
+    restaurants = Restaurant.objects.all()
 
+    menu_items_availability = {(menu_item.product_id, menu_item.restaurant_id) : menu_item.availability
+    for menu_item in menu_items}
+
+    orders_with_allowed_restaurants = []
     for order_item in order_items:
-
+        order_items_products = order_item.products.all()
         if order_item.status == 'Принят' and order_item.restaurant:
             OrderData.objects.filter(pk=order_item.id).update(status='Готовится')
             order_item.status = 'Готовится'
 
-        restaurants_with_product_availability= [] # находим все рестораны с доступным нужным нам продуктом
-        for order_product in order_item.products.all():
-            product = order_product.product
-            menu_items = list(RestaurantMenuItem.objects.filter(product_id=product.id, availability=True))
-            restaurant_with_available_product = [menu_item.restaurant for menu_item in menu_items]
+        #restaurants_with_product_availability = []  # находим все рестораны с доступным нужным нам продуктом
 
-            restaurants_with_product_availability.append(restaurant_with_available_product)
+        restaurants_with_product_availability = [
+            restaurant for order_product in order_items_products
+            for restaurant in restaurants if menu_items_availability.get((order_product.product_id, restaurant.id))
+        ]
 
-
-        restaurants_with_available_products = set(chain.from_iterable(restaurants_with_product_availability)) # делаем из рестранов - сет без дублирующих
+        #for order_product in order_items_products: # проходим циклом по всем продуктам в заказе
+        #    for restaurant in restaurants: # для каждого продукта проходим по всем ресторанам
+        #        if menu_items_availability.get((order_product.product_id, restaurant.id)): #Здесь использование product_id дает сокращение 13 запросов
+        #            restaurants_with_product_availability.append(restaurant) #В случае успеха добавляем ресторан в список
 
         allowed_restaurants = set()
-
-        for restaurant in restaurants_with_available_products:
-            if list(chain.from_iterable(restaurants_with_product_availability)).count(restaurant) == order_item.products.count():
+        for restaurant in restaurants_with_product_availability:
+            if restaurants_with_product_availability.count(restaurant) == order_item.products.count():
                 allowed_restaurants.add(restaurant)
 
-        allowed_restaurants_with_distance = []
+        preloaded_locations = {location.address : (location.lon, location.lat, location.is_expired()) for location in locations}
+        restaurants_with_distances = []
 
         for allowed_restaurant in allowed_restaurants:
-            allowed_restaurant_coordinates = []
-            customer_coordinates = []
-            customer_coordinates = get_address_coordinates(locations, order_item.address)
-            allowed_restaurant_coordinates = get_address_coordinates(locations, allowed_restaurant.address)
+            customer_coordinates = get_address_coordinates(preloaded_locations, order_item.address)
+            allowed_restaurant_coordinates = get_address_coordinates(preloaded_locations, allowed_restaurant.address)
 
-            if None in customer_coordinates or None in allowed_restaurant_coordinates:
-                distance_to_customer = -1
-            else:
+            if customer_coordinates and allowed_restaurant_coordinates:
                 distance_to_customer = round(dist.distance(customer_coordinates, allowed_restaurant_coordinates).km, 2)
+            else:
+                distance_to_customer = -1   # отрицательное значение переменной в данном случае является индикатором того, что дистанцию вычислить не удалось
+            restaurants_with_distances.append((allowed_restaurant, distance_to_customer))
 
-            allowed_restaurants_with_distance.append((allowed_restaurant, distance_to_customer))
+        sorted_restaurants_with_distances = sorted(restaurants_with_distances, key=lambda distance: distance[1])
 
-        print(f'РЕСТОРАНЫ С ДИСТАНЦИЯМИ ДО НИХ --- {allowed_restaurants_with_distance}')
-
-        sorted_allowed_restaurants_with_distance = sorted(allowed_restaurants_with_distance, key=lambda distance: distance[1])
-
-        new_sorted_allowed_restaurants_with_distance = []
-        for restaurant, distance in sorted_allowed_restaurants_with_distance:
-            if distance < 0:
-               distance = 'Ошибка определения координат - расстояние неизвестно'
-            new_sorted_allowed_restaurants_with_distance.append((restaurant, distance))
-
-        orders_with_allowed_restaurants.append((order_item, new_sorted_allowed_restaurants_with_distance))
+        orders_with_allowed_restaurants.append((order_item, sorted_restaurants_with_distances))
 
     return render(request, template_name='order_items.html', context={
         'orders_with_allowed_restaurants': orders_with_allowed_restaurants,

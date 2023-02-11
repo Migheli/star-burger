@@ -26,6 +26,3 @@ class Location(models.Model):
 
     def is_expired(self):
         return (timezone.now() - self.updated_at).days > 180
-
-    def is_blank(self):
-        return self.lat is None
