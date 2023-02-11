@@ -114,24 +114,25 @@ def fetch_coordinates(address):
 
 
 def get_address_coordinates(locations, address):
-    location_lon, location_lat = None, None
+    lon, lat = None, None
     is_expired = True
 
     if locations.get(address):
-        location_lon, location_lat, is_expired = locations.get(address)
+        lon, lat, is_expired = locations.get(address)
 
-    if all([not is_expired, location_lon, location_lat]):
-        return location_lon, location_lat
+    if all([not is_expired, lon, lat]):
+        return lon, lat
 
     else:
         try:
             coordinates = fetch_coordinates(address)
             if coordinates:
-                location_lon, location_lat = coordinates
-                Location.objects.update_or_create(address=address, lon=location_lon, lat=location_lat) #UPDATE Очень тормозит поскольку ищет все.
-                return location_lon, location_lat
+                lon, lat = coordinates
+                Location.objects.update_or_create(address=address, lon=lon, lat=lat)
+                return lon, lat
         except RequestException:
             return None
+
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
@@ -145,27 +146,18 @@ def view_orders(request):
 
     orders_with_allowed_restaurants = []
     for order_item in order_items:
-        order_items_products = order_item.products.all()
+
         if order_item.status == 'Принят' and order_item.restaurant:
             OrderData.objects.filter(pk=order_item.id).update(status='Готовится')
             order_item.status = 'Готовится'
 
-        #restaurants_with_product_availability = []  # находим все рестораны с доступным нужным нам продуктом
-
         restaurants_with_product_availability = [
-            restaurant for order_product in order_items_products
+            restaurant for order_product in order_item.products.all()
             for restaurant in restaurants if menu_items_availability.get((order_product.product_id, restaurant.id))
         ]
 
-        #for order_product in order_items_products: # проходим циклом по всем продуктам в заказе
-        #    for restaurant in restaurants: # для каждого продукта проходим по всем ресторанам
-        #        if menu_items_availability.get((order_product.product_id, restaurant.id)): #Здесь использование product_id дает сокращение 13 запросов
-        #            restaurants_with_product_availability.append(restaurant) #В случае успеха добавляем ресторан в список
-
-        allowed_restaurants = set()
-        for restaurant in restaurants_with_product_availability:
-            if restaurants_with_product_availability.count(restaurant) == order_item.products.count():
-                allowed_restaurants.add(restaurant)
+        allowed_restaurants = set([restaurant for restaurant in restaurants_with_product_availability
+                                   if restaurants_with_product_availability.count(restaurant) == order_item.products.count()]) # если количество вхождений ресторана в список равно количеству элементов заказа, добавляем ресторан в неповторяющийся сет искомых ресторанов
 
         preloaded_locations = {location.address : (location.lon, location.lat, location.is_expired()) for location in locations}
         restaurants_with_distances = []
@@ -177,7 +169,7 @@ def view_orders(request):
             if customer_coordinates and allowed_restaurant_coordinates:
                 distance_to_customer = round(dist.distance(customer_coordinates, allowed_restaurant_coordinates).km, 2)
             else:
-                distance_to_customer = -1   # отрицательное значение переменной в данном случае является индикатором того, что дистанцию вычислить не удалось
+                distance_to_customer = -1   # отрицательное значение переменной является индикатором того, что дистанцию вычислить не удалось и произошла ошибка
             restaurants_with_distances.append((allowed_restaurant, distance_to_customer))
 
         sorted_restaurants_with_distances = sorted(restaurants_with_distances, key=lambda distance: distance[1])
