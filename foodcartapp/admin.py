@@ -131,8 +131,17 @@ class OrderAdmin(admin.ModelAdmin):
         OrderProductsItemInline
     ]
 
-    def response_change(self, request, obj):
+    def check_cooking_start(self, obj):
+        if obj.status == 'Принят' and obj.cooking_restaurant:
+            obj.status = 'Готовится'
+            obj.save()
+        else:
+            print (f'Не готовится')
 
+    def response_change(self, request, obj):
+        if obj.status == 'Принят' and obj.cooking_restaurant:
+            obj.status = 'Готовится'
+            obj.save()
         if url_has_allowed_host_and_scheme(request.GET.get('returnUrl'), None):
             return redirect(iri_to_uri(request.GET.get('returnUrl')))
         return super().response_post_save_change(request, obj)

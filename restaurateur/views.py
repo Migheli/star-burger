@@ -146,10 +146,6 @@ def view_orders(request):
     orders_with_allowed_restaurants = []
     for order in orders:
 
-        if order.status == 'Принят' and order.cooking_restaurant:
-            Order.objects.filter(pk=order.id).update(status='Готовится')
-            order.status = 'Готовится'
-
         restaurants_with_product_availability = [
             restaurant for order_product in order.order_product.all()
             for restaurant in restaurants if menu_items_availability.get((order_product.product_id, restaurant.id))
