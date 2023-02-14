@@ -200,7 +200,7 @@ class OrderProducts(models.Model):
         'цена',
         max_digits=8,
         decimal_places=2,
-        validators=[MinValueValidator(1)],
+        validators=[MinValueValidator(0)],
     )
 
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
