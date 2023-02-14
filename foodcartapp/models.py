@@ -182,7 +182,7 @@ class OrderData(models.Model):
 class OrderProducts(models.Model):
     order = models.ForeignKey(
         OrderData,
-        verbose_name='элемент заказа',
+        verbose_name='заказ',
         related_name='order_product',
         null=True,
         blank=True,
@@ -203,7 +203,9 @@ class OrderProducts(models.Model):
         validators=[MinValueValidator(0)],
     )
 
-    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(validators=[MinValueValidator(1)],
+                                   verbose_name='количество'
+    )
 
     objects = OrderProductsQuerySet.as_manager()
 
