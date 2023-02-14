@@ -152,8 +152,8 @@ def view_orders(request):
         ]
 
         allowed_restaurants = set([restaurant for restaurant in restaurants_with_product_availability
-                                   if restaurants_with_product_availability.count(restaurant) == order.order_product.count()]) # если количество вхождений ресторана в список равно количеству элементов заказа, добавляем ресторан в неповторяющийся сет искомых ресторанов
-
+                                   if restaurants_with_product_availability.count(restaurant) == order.order_product.count()])
+                
         preloaded_locations = {location.address : (location.lon, location.lat, location.is_expired()) for location in locations}
         restaurants_with_distances = []
 
@@ -164,7 +164,7 @@ def view_orders(request):
             if customer_coordinates and restaurant_coordinates:
                 distance_to_customer = round(dist.distance(customer_coordinates, restaurant_coordinates).km, 2)
             else:
-                distance_to_customer = -1   # отрицательное значение переменной является индикатором того, что дистанцию вычислить не удалось и произошла ошибка
+                distance_to_customer = -1
             restaurants_with_distances.append((allowed_restaurant, distance_to_customer))
 
         sorted_restaurants_with_distances = sorted(restaurants_with_distances, key=lambda distance: distance[1])
