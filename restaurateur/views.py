@@ -83,7 +83,7 @@ def view_products(request):
         )
 
     return render(request, template_name="products_list.html", context={
-        'products_with_restaurant_availability': products_with_restaurant_availability,
+        'poducts_with_restaurant_availability': products_with_restaurant_availability,
         'restaurants': restaurants,
     })
 
@@ -134,7 +134,7 @@ def get_coordinates(locations, address):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = OrderData.objects.prefetch_related('products')
+    orders = OrderData.objects.prefetch_related('order_product')
     locations = Location.objects.all()
     menu_items = RestaurantMenuItem.objects.all()
     restaurants = Restaurant.objects.all()
@@ -150,12 +150,12 @@ def view_orders(request):
             order.status = 'Готовится'
 
         restaurants_with_product_availability = [
-            restaurant for order_product in order.products.all()
+            restaurant for order_product in order.order_product.all()
             for restaurant in restaurants if menu_items_availability.get((order_product.product_id, restaurant.id))
         ]
 
         allowed_restaurants = set([restaurant for restaurant in restaurants_with_product_availability
-                                   if restaurants_with_product_availability.count(restaurant) == order.products.count()]) # если количество вхождений ресторана в список равно количеству элементов заказа, добавляем ресторан в неповторяющийся сет искомых ресторанов
+                                   if restaurants_with_product_availability.count(restaurant) == order.order_product.count()]) # если количество вхождений ресторана в список равно количеству элементов заказа, добавляем ресторан в неповторяющийся сет искомых ресторанов
 
         preloaded_locations = {location.address : (location.lon, location.lat, location.is_expired()) for location in locations}
         restaurants_with_distances = []
