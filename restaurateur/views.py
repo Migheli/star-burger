@@ -145,7 +145,7 @@ def view_orders(request):
     orders_with_allowed_restaurants = []
     for order in orders:
 
-        if order.status == 'Принят' and order.restaurant:
+        if order.status == 'Принят' and order.cooking_restaurant:
             OrderData.objects.filter(pk=order.id).update(status='Готовится')
             order.status = 'Готовится'
 

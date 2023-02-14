@@ -154,7 +154,7 @@ class OrderData(models.Model):
     called_at = models.DateTimeField('Дата звонка', blank=True, null=True, db_index=True)
     delivered_at = models.DateTimeField('Дата доставки', blank=True, null=True, db_index=True)
 
-    restaurant = models.ForeignKey(
+    cooking_restaurant = models.ForeignKey(
         Restaurant,
         verbose_name='Какой из ресторанов приготовит',
         related_name='orders',
