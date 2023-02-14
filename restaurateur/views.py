@@ -129,7 +129,7 @@ def get_coordinates(locations, address):
                 Location.objects.update_or_create(address=address, lon=lon, lat=lat)
                 return lon, lat
         except RequestException:
-            return None
+            return
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
