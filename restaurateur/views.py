@@ -135,9 +135,10 @@ def get_coordinates(locations, address):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = OrderData.objects.prefetch_related('order_product')
-    locations = Location.objects.all()
     menu_items = RestaurantMenuItem.objects.all()
     restaurants = Restaurant.objects.all()
+    required_addresses = [order.address for order in orders] + [restaurant.address for restaurant in restaurants]
+    locations = Location.objects.filter(address__in=required_addresses)
 
     menu_items_availability = {(menu_item.product_id, menu_item.restaurant_id) : menu_item.availability
     for menu_item in menu_items}
