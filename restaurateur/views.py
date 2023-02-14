@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-from foodcartapp.models import Product, Restaurant, OrderData, RestaurantMenuItem
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 from geodata.models import Location
 import requests
 
@@ -134,7 +134,7 @@ def get_coordinates(locations, address):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = OrderData.objects.prefetch_related('order_product')
+    orders = Order.objects.prefetch_related('order_product')
     menu_items = RestaurantMenuItem.objects.all()
     restaurants = Restaurant.objects.all()
     required_addresses = [order.address for order in orders] + [restaurant.address for restaurant in restaurants]
@@ -147,7 +147,7 @@ def view_orders(request):
     for order in orders:
 
         if order.status == 'Принят' and order.cooking_restaurant:
-            OrderData.objects.filter(pk=order.id).update(status='Готовится')
+            Order.objects.filter(pk=order.id).update(status='Готовится')
             order.status = 'Готовится'
 
         restaurants_with_product_availability = [

@@ -4,7 +4,7 @@ from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .models import Product, OrderData
+from .models import Product, Order
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
@@ -118,8 +118,8 @@ class OrderProductsItemInline(admin.TabularInline):
     model = OrderProducts
 
 
-@admin.register(OrderData)
-class OrderDataAdmin(admin.ModelAdmin):
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
     list_display = [
         'firstname',
         'lastname',

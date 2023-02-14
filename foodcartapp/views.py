@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
-from .models import Product, OrderProducts, OrderData
+from .models import Product, OrderProducts, Order
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from django.db import transaction
@@ -70,7 +70,7 @@ class OrderSerializer(ModelSerializer):
     products = ProductSerializer(many=True, allow_empty=False, write_only=True)
 
     class Meta:
-        model = OrderData
+        model = Order
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
 
 

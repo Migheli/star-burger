@@ -133,7 +133,7 @@ class OrderProductsQuerySet(models.QuerySet):
         return self.aggregate(element_sum=Sum(F('quantity') * F('price')))
 
 
-class OrderData(models.Model):
+class Order(models.Model):
     ORDER_STATUSES = [('Принят', 'Принят'), ('Готовится', 'Готовится'),
                       ('Доставка', 'Доставка'), ('Выполнен', 'Выполнен')]
 
@@ -179,7 +179,7 @@ class OrderData(models.Model):
 
 class OrderProducts(models.Model):
     order = models.ForeignKey(
-        OrderData,
+        Order,
         verbose_name='заказ',
         related_name='order_product',
         null=True,

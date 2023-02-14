@@ -51,7 +51,7 @@
                 {% endfor %}
             </details>>
           </td>
-          <td>  <a href="{% url "admin:foodcartapp_orderdata_change" object_id=item.id%}?returnUrl={{request.get_full_path|urlencode}}">Редактировать</a> </td>
+          <td>  <a href="{% url "admin:foodcartapp_order_change" object_id=item.id%}?returnUrl={{request.get_full_path|urlencode}}">Редактировать</a> </td>
           <td> {{ item.status }} </td>
         </tr>
       {% endif %}
