@@ -134,12 +134,13 @@ class OrderProductsQuerySet(models.QuerySet):
 
 
 class OrderData(models.Model):
+    ORDER_STATUSES = [('Принят', 'Принят'), ('Готовится', 'Готовится'),
+                      ('Доставка', 'Доставка'), ('Выполнен', 'Выполнен')]
+
     firstname = models.CharField('Имя', max_length=50, db_index=True)
     lastname = models.CharField('Фамилия', max_length=50, db_index=True)
     phonenumber = PhoneNumberField('Телефон', db_index=True)
     address = models.CharField('Адрес', max_length=250, db_index=True)
-    ORDER_STATUSES = [('Принят', 'Принят'), ('Готовится', 'Готовится'),
-                      ('Доставка', 'Доставка'), ('Выполнен', 'Выполнен')]
     payment_type = models.CharField(
         'Способ оплаты',
         max_length=25,
@@ -147,13 +148,10 @@ class OrderData(models.Model):
         default='Наличными',
         db_index=True
     )
-
     comment = models.TextField('Комментарий', blank=True)
-
     registered_at = models.DateTimeField('Дата создания', default=timezone.now, db_index=True)
     called_at = models.DateTimeField('Дата звонка', blank=True, null=True, db_index=True)
     delivered_at = models.DateTimeField('Дата доставки', blank=True, null=True, db_index=True)
-
     cooking_restaurant = models.ForeignKey(
         Restaurant,
         verbose_name='Какой из ресторанов приготовит',
