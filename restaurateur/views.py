@@ -134,7 +134,7 @@ def get_coordinates(locations, address):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.prefetch_related('order_product')
+    orders = Order.objects.prefetch_related('order_products')
     menu_items = RestaurantMenuItem.objects.all()
     restaurants = Restaurant.objects.all()
     required_addresses = [order.address for order in orders] + [restaurant.address for restaurant in restaurants]
@@ -147,12 +147,12 @@ def view_orders(request):
     for order in orders:
 
         restaurants_with_product_availability = [
-            restaurant for order_product in order.order_product.all()
+            restaurant for order_product in order.order_products.all()
             for restaurant in restaurants if menu_items_availability.get((order_product.product_id, restaurant.id))
         ]
 
         allowed_restaurants = set([restaurant for restaurant in restaurants_with_product_availability
-                                   if restaurants_with_product_availability.count(restaurant) == order.order_product.count()])
+                                   if restaurants_with_product_availability.count(restaurant) == order.order_products.count()])
 
         preloaded_locations = {location.address : (location.lon, location.lat, location.is_expired()) for location in locations}
         restaurants_with_distances = []
