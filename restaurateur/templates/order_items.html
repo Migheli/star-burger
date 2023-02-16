@@ -42,9 +42,9 @@
             <details>
 
               <summary> Рестораны </summary>
-                {% for restaurant, disctance in restaurants_with_disctance %}
-                  {% if disctance > 0 %}
-                    <li>{{restaurant}} - {{disctance}} км</li>
+                {% for restaurant, distance in restaurants_with_disctance %}
+                  {% if distance > 0 %}
+                    <li>{{restaurant}} - {{distance}} км</li>
                   {% else %}
                     <li> {{restaurant}}: произошла ошибка определения координат</li>
                   {% endif %}

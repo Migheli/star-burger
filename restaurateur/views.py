@@ -120,7 +120,6 @@ def get_coordinates(locations, address):
 
     if all([not is_expired, lon, lat]):
         return lon, lat
-
     else:
         try:
             coordinates = fetch_coordinates(address)

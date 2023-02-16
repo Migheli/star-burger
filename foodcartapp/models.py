@@ -133,6 +133,11 @@ class OrderProductsQuerySet(models.QuerySet):
         return self.aggregate(element_sum=Sum(F('quantity') * F('price')))
 
 
+class OrderQuerySet(models.QuerySet):
+    def get_order_sum(self):
+        return self.annotate(order_sum=Sum(F('quantity') * F('price')))
+
+
 class Order(models.Model):
     ORDER_STATUSES = [('Принят', 'Принят'), ('Готовится', 'Готовится'),
                       ('Доставка', 'Доставка'), ('Выполнен', 'Выполнен')]
