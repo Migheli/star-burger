@@ -181,7 +181,7 @@ class OrderProducts(models.Model):
     order = models.ForeignKey(
         Order,
         verbose_name='заказ',
-        related_name='order_product',
+        related_name='order_products',
         null=True,
         blank=True,
         on_delete=models.SET_NULL)
@@ -189,7 +189,7 @@ class OrderProducts(models.Model):
     product = models.ForeignKey(
         Product,
         verbose_name='продукт',
-        related_name='order_product',
+        related_name='order_products',
         null=True,
         blank=True,
         on_delete=models.SET_NULL)
