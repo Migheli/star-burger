@@ -145,7 +145,7 @@ class Order(models.Model):
         'Способ оплаты',
         max_length=25,
         choices=[('Наличными', 'Наличными'), ('Электронно', 'Электронно')],
-        default='Электронно',
+        default=None,
         db_index=True
     )
     comment = models.TextField('Комментарий', blank=True)
