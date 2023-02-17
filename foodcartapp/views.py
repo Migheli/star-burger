@@ -97,5 +97,4 @@ def register_order(request):
         for product in order_validated_data['products']
     ]
     OrderProducts.objects.bulk_create(order_elements)
-
     return Response(OrderSerializer(order).data)

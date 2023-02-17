@@ -26,14 +26,14 @@
       <th>Статус</th>
     </tr>
 
-    {% for item, restaurants_with_disctance in orders_with_allowed_restaurants %}
+    {% for item, restaurants_with_distance in orders_with_allowed_restaurants %}
 
       {% if item.is_in_work %}
         <tr>
           <td> {{ item.id }} </td>
           <td> {{ item.get_status_display }} </td>
           <td> {{ item.get_payment_type_display }} </td>
-          <td> {{ item.products.get_element_sum.element_sum }} </td>
+          <td> {{ item.order_sum }} </td>
           <td> {{ item.firstname }} {{ item.lastname }} </td>
           <td> {{ item.phonenumber }} </td>
           <td> {{ item.address }} </td>
@@ -42,8 +42,8 @@
             <details>
 
               <summary> Рестораны </summary>
-                {% for restaurant, distance in restaurants_with_disctance %}
-                  {% if distance > 0 %}
+                {% for restaurant, distance in restaurants_with_distance %}
+                  {% if distance %}
                     <li>{{restaurant}} - {{distance}} км</li>
                   {% else %}
                     <li> {{restaurant}}: произошла ошибка определения координат</li>

@@ -128,15 +128,9 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-class OrderProductsQuerySet(models.QuerySet):
-    def get_element_sum(self):
-        return self.aggregate(element_sum=Sum(F('quantity') * F('price')))
-
-
 class OrderQuerySet(models.QuerySet):
     def get_order_sum(self):
-        return self.annotate(order_sum=Sum(F('quantity') * F('price')))
-
+        return self.annotate(order_sum=Sum(F('order_products__price') * F('order_products__quantity')))
 
 class Order(models.Model):
     ORDER_STATUSES = [('Принят', 'Принят'), ('Готовится', 'Готовится'),
@@ -172,6 +166,8 @@ class Order(models.Model):
         default='Принят',
         db_index=True
     )
+
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Заказ'
@@ -209,8 +205,6 @@ class OrderProducts(models.Model):
     quantity = models.IntegerField(validators=[MinValueValidator(1)],
                                    verbose_name='количество'
     )
-
-    objects = OrderProductsQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Элемент заказа'

@@ -133,7 +133,7 @@ def get_coordinates(locations, address):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.prefetch_related('order_products')
+    orders = Order.objects.prefetch_related('order_products').get_order_sum()
     menu_items = RestaurantMenuItem.objects.all()
     restaurants = Restaurant.objects.all()
     required_addresses = [order.address for order in orders] + [restaurant.address for restaurant in restaurants]
@@ -167,7 +167,6 @@ def view_orders(request):
             restaurants_with_distances.append((allowed_restaurant, distance_to_customer))
 
         sorted_restaurants_with_distances = sorted(restaurants_with_distances, key=lambda distance: (distance[1] is None, distance[1]))
-
         orders_with_allowed_restaurants.append((order, sorted_restaurants_with_distances))
 
     return render(request, template_name='order_items.html', context={
