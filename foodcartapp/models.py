@@ -143,6 +143,8 @@ class Order(models.Model):
     payment_type = models.CharField(
         'Способ оплаты',
         max_length=25,
+        null=True,
+        blank=True,
         choices=[('Наличными', 'Наличными'), ('Электронно', 'Электронно')],
         default=None,
         db_index=True
