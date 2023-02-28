@@ -80,7 +80,6 @@ def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     order_validated_data = serializer.validated_data
-
     order = Order.objects.create(
         firstname=order_validated_data['firstname'],
         lastname=order_validated_data['lastname'],
