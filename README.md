@@ -152,11 +152,8 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_ENVIRONMENT_NAME` в значение данной переменной поместите название Вашего rollbar-окружения.
 - `ROLLBAR_CODE_VERSION` версия кода для отображения в rollbar. Необязательная переменная.
 
-- `POSTGRES_DB_NAME` название Вашей БД Postgres
-- `POSTGRES_DB_USER` имя пользователя БД
-- `POSTGRES_DB_PASSWORD` пароль БД для вышеуказанного пользователя
-- `POSTGRES_DB_HOST` хост БД
-- `POSTGRES_DB_PORT` порт БД
+- `POSTGRES_DB_URL` имя пользователя, пароль, хост, порт и название Вашей БД в специализированной URL-записи следующего вида:
+   `postgres://USER:PASSWORD@HOST:PORT/NAME` [см. подробнее по ссылке](https://github.com/jazzband/dj-database-url#url-schema).
 
 
 ## Цели проекта
