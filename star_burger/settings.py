@@ -129,9 +129,12 @@ STATICFILES_DIRS = [
 
 YANDEX_GEOCODER_KEY = env('YANDEX_GEOCODER_KEY')
 
-ROLLBAR = {
-    'access_token': env('ROLLBAR_ACCESS_TOKEN'),
-    'environment': env('ROLLBAR_ENVIRONMENT_NAME', 'undefined'),
-    'code_version': env('ROLLBAR_CODE_VERSION', None),
-    'root': BASE_DIR,
-}
+ROLLBAR_ACTIVATE = env.bool('ROLLBAR_ACTIVATE', False)
+
+if ROLLBAR_ACTIVATE:
+    ROLLBAR = {
+        'access_token': env('ROLLBAR_ACCESS_TOKEN'),
+        'environment': env('ROLLBAR_ENVIRONMENT_NAME', 'undefined'),
+        'code_version': env('ROLLBAR_CODE_VERSION', None),
+        'root': BASE_DIR,
+    }
